@@ -104,17 +104,21 @@ INSTRUCCIONES DE FORMATO — MUY IMPORTANTE
 3. Los strings JSON no pueden contener comillas dobles sin escapar. Usa \\" si necesitas comillas dentro del contenido.
 4. Genera contenido jurídico completo y preciso en cada sección. Pronuncia todos los hechos y todas las pretensiones de la demanda, uno por uno — nunca los resumas ni los omitas.
 5. Cita siempre la norma específica (ley y artículo) que sustenta cada afirmación jurídica — nunca una afirmación sin fundamento citado.
+6. "metadata.fechaNotificacion" y "metadata.terminoDias" son campos estructurados que el sistema usa para calcular automáticamente la fecha límite real de contestación (no son decorativos). Solo llena "fechaNotificacion" cuando la demanda indique una fecha de notificación inequívoca; en cualquier otro caso usa null — un valor inventado aquí puede hacer que el sistema le diga al abogado una fecha límite incorrecta.
 
 ESTRUCTURA JSON A RETORNAR:
 {
   "metadata": {
     "demandante": "nombre completo",
     "demandado": "nombre completo",
+    "radicado": "número de radicado del expediente si la demanda lo trae, o null si no aparece",
     "pretensiones": "resumen de las pretensiones principales",
     "cuantia": "valor en COP o SMLMV",
     "juzgado": "despacho competente",
     "tipoProceso": "verbal | verbalSumario | ordinario | ejecutivo | requiereValidacionCPACA",
     "terminoContestacion": "N días hábiles según art. X CGP, o explicación si no se pudo calcular",
+    "fechaNotificacion": "YYYY-MM-DD si la demanda indica con claridad la fecha de notificación efectiva al demandado, o null si no aparece o es ambigua. NUNCA inventes una fecha.",
+    "terminoDias": "número entero de días hábiles del término de contestación (10 para verbal, 20 para ordinario, etc.), o null si no aplica (p. ej. requiereValidacionCPACA) o no se pudo determinar el tipo de proceso con certeza",
     "normativaAplicable": ["art. 96 CGP", "art. 369 CGP", "art. 1058 C.Co."],
     "perfilCaso": "incumplimientoContractual | seguros | consumidor | mixto"
   },

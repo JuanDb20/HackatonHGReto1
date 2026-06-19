@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { SYSTEM_PROMPT } from '@/lib/prompts'
+import { getSession } from '@/lib/auth'
+import sql from '@/lib/db'
+import { parseFechaISO, sumarDiasHabilesColombia, formatFechaISO } from '@/lib/diasHabilesCo'
 
 // Render permite respuestas HTTP de hasta 100 minutos (a diferencia del
 // límite duro de 60s de Vercel Hobby), así que no hace falta dividir la
@@ -125,6 +128,44 @@ export async function POST(req: NextRequest) {
         return { ...s, contenido: limpio.trim() }
       })
     }
+
+    // Persistir el caso para seguimiento de términos. Si no hay sesión activa
+    // (no debería pasar en uso normal, pero por seguridad) o la tabla aún no
+    // existe (falta correr /api/casos/setup una vez), no se rompe la
+    // generación — el borrador se devuelve igual, simplemente sin casoId.
+    let casoId: number | null = null
+    let fechaVencimientoSugerida: string | null = null
+    try {
+      const session = await getSession()
+      if (session) {
+        const meta = result.metadata || {}
+        const fechaNotif = parseFechaISO(meta.fechaNotificacion)
+        const terminoDias = Number.isFinite(Number(meta.terminoDias)) ? Number(meta.terminoDias) : null
+        if (fechaNotif && terminoDias && terminoDias > 0) {
+          fechaVencimientoSugerida = formatFechaISO(sumarDiasHabilesColombia(fechaNotif, terminoDias))
+        }
+
+        const rows = await sql`
+          INSERT INTO litigia_casos (
+            user_id, demandante, demandado, radicado, juzgado, tipo_proceso,
+            fecha_notificacion, termino_dias, fecha_vencimiento, contestacion_json
+          )
+          VALUES (
+            ${session.id}, ${meta.demandante || null}, ${meta.demandado || null},
+            ${meta.radicado || null}, ${meta.juzgado || null}, ${meta.tipoProceso || null},
+            ${fechaNotif ? formatFechaISO(fechaNotif) : null}, ${terminoDias},
+            ${fechaVencimientoSugerida}, ${JSON.stringify(result)}
+          )
+          RETURNING id
+        `
+        casoId = rows[0]?.id ?? null
+      }
+    } catch (dbError) {
+      console.error('No se pudo guardar el caso para seguimiento (¿falta correr /api/casos/setup?):', dbError)
+    }
+
+    result.casoId = casoId
+    result.fechaVencimientoSugerida = fechaVencimientoSugerida
 
     return NextResponse.json(result)
   } catch (error: unknown) {

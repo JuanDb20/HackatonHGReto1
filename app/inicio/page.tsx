@@ -3,12 +3,20 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { DEMANDA_EJEMPLO } from '@/lib/prompts'
+import { formatFechaLegible } from '@/lib/diasHabilesCo'
 
 interface UserInfo {
   nombre: string
   cargo: string
   tarjeta_profesional: string | null
   foto_url: string | null
+}
+
+interface AlertaCaso {
+  id: number
+  demandante: string | null
+  demandado: string | null
+  fecha_vencimiento: string
 }
 
 const LOADING_STEPS = [
@@ -30,11 +38,19 @@ export default function InicioPage() {
   const [error, setError] = useState<string | null>(null)
   const [user, setUser] = useState<UserInfo | null>(null)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [alertasVencimiento, setAlertasVencimiento] = useState<AlertaCaso[]>([])
 
   useEffect(() => {
     fetch('/api/auth/me')
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setUser(data) })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/casos/alertas?dias=2')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.alertas) setAlertasVencimiento(data.alertas) })
       .catch(() => {})
   }, [])
 
@@ -150,6 +166,15 @@ export default function InicioPage() {
 
         <nav className="flex items-center gap-6">
           <a
+            href="/terminos"
+            className="text-xs font-semibold uppercase tracking-widest transition-colors"
+            style={{ color: '#6b7280' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'white')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#6b7280')}
+          >
+            Términos
+          </a>
+          <a
             href="/dashboard"
             className="text-xs font-semibold uppercase tracking-widest transition-colors"
             style={{ color: '#6b7280' }}
@@ -243,6 +268,34 @@ export default function InicioPage() {
           )}
         </nav>
       </header>
+
+      {/* ALERTA DE VENCIMIENTOS PRÓXIMOS */}
+      {alertasVencimiento.length > 0 && (
+        <div className="pt-20 px-8">
+          <div
+            className="max-w-4xl mx-auto px-5 py-4 flex items-start gap-3"
+            style={{ background: '#1a0808', border: '1px solid #7f1d1d', borderLeft: '4px solid var(--hg-red)' }}
+          >
+            <div className="w-6 h-6 flex items-center justify-center font-black text-xs flex-shrink-0 mt-0.5" style={{ background: 'var(--hg-red)', color: 'white' }}>!</div>
+            <div className="flex-1">
+              <p className="font-black text-xs uppercase tracking-widest mb-1" style={{ color: '#f87171' }}>
+                {alertasVencimiento.length} caso{alertasVencimiento.length > 1 ? 's' : ''} con término por vencer
+              </p>
+              <ul className="space-y-1">
+                {alertasVencimiento.map(a => (
+                  <li key={a.id} className="text-xs" style={{ color: '#fca5a5' }}>
+                    {a.demandado || 'Demandado'} vs. {a.demandante || 'Demandante'} — vence el{' '}
+                    {formatFechaLegible(a.fecha_vencimiento, 'largo') || 'fecha no disponible'}
+                  </li>
+                ))}
+              </ul>
+              <a href="/terminos" className="inline-block mt-2 text-xs font-black uppercase tracking-widest" style={{ color: 'white', textDecoration: 'underline' }}>
+                Ver todos los términos →
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* HERO */}
       <section className="relative pt-40 pb-52 px-8 text-center wave-dark-to-light">

@@ -88,6 +88,9 @@ export default function DashboardPage() {
           <a href="/inicio" className="text-sm hover:text-white transition-colors" style={{ color: 'var(--hg-text-muted)' }}>
             Generar contestación
           </a>
+          <a href="/terminos" className="text-sm hover:text-white transition-colors" style={{ color: 'var(--hg-text-muted)' }}>
+            Términos
+          </a>
         </nav>
       </header>
 

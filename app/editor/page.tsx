@@ -46,15 +46,45 @@ export default function EditorPage() {
   const [reviewedSections, setReviewedSections] = useState<Set<string>>(new Set())
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [seguimientoModalOpen, setSeguimientoModalOpen] = useState(false)
+  const [seguimientoActivo, setSeguimientoActivo] = useState(false)
+  const [fechaVencimientoInput, setFechaVencimientoInput] = useState('')
+  const [guardandoSeguimiento, setGuardandoSeguimiento] = useState(false)
+  const [errorSeguimiento, setErrorSeguimiento] = useState<string | null>(null)
+  const [cargandoCaso, setCargandoCaso] = useState(false)
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const contentRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   useEffect(() => {
+    const casoIdParam = new URLSearchParams(window.location.search).get('casoId')
+
+    // Reabrir un caso existente desde /terminos (trae su propio snapshot de
+    // la contestación guardado en la base de datos).
+    if (casoIdParam) {
+      setCargandoCaso(true)
+      fetch(`/api/casos/${casoIdParam}`)
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(({ caso }) => {
+          if (!caso?.contestacion_json) throw new Error('Caso sin contenido guardado')
+          const parsed = caso.contestacion_json
+          parsed.casoId = caso.id
+          setData(parsed)
+          setSeguimientoActivo(caso.seguimiento_activo)
+          if (caso.fecha_vencimiento) setFechaVencimientoInput(String(caso.fecha_vencimiento).slice(0, 10))
+          if (parsed.sections?.length > 0) setActiveSection(parsed.sections[0].id)
+        })
+        .catch(() => router.push('/terminos'))
+        .finally(() => setCargandoCaso(false))
+      return
+    }
+
+    // Flujo normal: contestación recién generada, guardada en localStorage.
     const stored = localStorage.getItem('litigia_contestacion')
     if (!stored) { router.push('/inicio'); return }
     const parsed = JSON.parse(stored)
     setData(parsed)
     if (parsed.sections?.length > 0) setActiveSection(parsed.sections[0].id)
+    if (parsed.fechaVencimientoSugerida) setFechaVencimientoInput(parsed.fechaVencimientoSugerida)
   }, [router])
 
   useEffect(() => {
@@ -237,12 +267,35 @@ export default function EditorPage() {
     }
   }
 
+  const confirmarSeguimiento = async () => {
+    if (!data?.casoId || !fechaVencimientoInput) return
+    setGuardandoSeguimiento(true)
+    setErrorSeguimiento(null)
+    try {
+      const res = await fetch(`/api/casos/${data.casoId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activarSeguimiento: true, fechaVencimiento: fechaVencimientoInput }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'No se pudo activar el seguimiento.')
+      setSeguimientoActivo(true)
+      setSeguimientoModalOpen(false)
+    } catch (err) {
+      setErrorSeguimiento(err instanceof Error ? err.message : 'Error desconocido')
+    } finally {
+      setGuardandoSeguimiento(false)
+    }
+  }
+
   if (!data) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--hg-black)' }}>
         <div className="text-center">
           <div className="w-6 h-6 border-2 rounded-full animate-spin mx-auto mb-4" style={{ borderColor: 'var(--hg-red)', borderTopColor: 'transparent' }} />
-          <p className="text-xs uppercase tracking-widest" style={{ color: '#6b7280' }}>Cargando contestación...</p>
+          <p className="text-xs uppercase tracking-widest" style={{ color: '#6b7280' }}>
+            {cargandoCaso ? 'Abriendo caso guardado...' : 'Cargando contestación...'}
+          </p>
         </div>
       </div>
     )
@@ -298,6 +351,21 @@ export default function EditorPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSeguimientoModalOpen(true)}
+            disabled={!data.casoId || seguimientoActivo}
+            title={!data.casoId ? 'No se pudo guardar este caso para seguimiento' : seguimientoActivo ? 'El seguimiento de términos ya está activo para este caso' : 'Activar recordatorio de vencimiento de términos para este caso'}
+            className="text-xs uppercase tracking-widest font-black px-4 py-2 transition-all"
+            style={{
+              background: 'transparent',
+              color: seguimientoActivo ? '#4ade80' : !data.casoId ? '#3f3f3f' : '#fbbf24',
+              border: `1px solid ${seguimientoActivo ? '#4ade80' : !data.casoId ? '#3f3f3f' : '#fbbf24'}`,
+              opacity: !data.casoId ? 0.5 : 1,
+              cursor: !data.casoId || seguimientoActivo ? 'default' : 'pointer',
+            }}
+          >
+            {seguimientoActivo ? '⏰ Seguimiento activo' : '⏰ Agregar seguimiento de términos'}
+          </button>
           <button
             onClick={() => {
               if (!todasRevisadas) {
@@ -590,6 +658,61 @@ export default function EditorPage() {
           </div>
         </main>
       </div>
+
+      {/* MODAL: activar seguimiento de términos */}
+      {seguimientoModalOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center px-4"
+          style={{ background: 'rgba(0,0,0,0.6)' }}
+          onClick={() => !guardandoSeguimiento && setSeguimientoModalOpen(false)}
+        >
+          <div
+            className="bg-white p-6 w-full"
+            style={{ maxWidth: 420 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="font-black text-sm uppercase tracking-widest mb-1" style={{ color: 'var(--hg-black)' }}>
+              ⏰ Seguimiento de términos
+            </div>
+            <p className="text-xs leading-relaxed mb-4" style={{ color: '#6b7280' }}>
+              {data.fechaVencimientoSugerida
+                ? 'El sistema calculó esta fecha de vencimiento según el término de contestación detectado. Verifícala y ajústala si es necesario antes de activar el recordatorio.'
+                : 'El sistema no pudo calcular automáticamente la fecha de vencimiento (falta la fecha de notificación o no aplica un término de contestación estándar — por ejemplo, una tutela). Ingresa la fecha límite manualmente.'}
+            </p>
+            <label className="block text-xs font-black uppercase tracking-widest mb-1.5" style={{ color: '#4b5563' }}>
+              Fecha límite
+            </label>
+            <input
+              type="date"
+              value={fechaVencimientoInput}
+              onChange={e => setFechaVencimientoInput(e.target.value)}
+              className="w-full px-3 py-2 text-sm mb-4 outline-none"
+              style={{ border: '1px solid #d4d4d4', color: '#1a1a1a' }}
+            />
+            {errorSeguimiento && (
+              <p className="text-xs mb-3" style={{ color: 'var(--hg-red)' }}>{errorSeguimiento}</p>
+            )}
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setSeguimientoModalOpen(false)}
+                disabled={guardandoSeguimiento}
+                className="text-xs uppercase tracking-widest font-semibold px-4 py-2"
+                style={{ color: '#6b7280' }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarSeguimiento}
+                disabled={guardandoSeguimiento || !fechaVencimientoInput}
+                className="text-xs uppercase tracking-widest font-black px-4 py-2 text-white"
+                style={{ background: 'var(--hg-red)', opacity: guardandoSeguimiento || !fechaVencimientoInput ? 0.6 : 1 }}
+              >
+                {guardandoSeguimiento ? 'Guardando…' : 'Activar recordatorio'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
