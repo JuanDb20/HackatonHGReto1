@@ -391,7 +391,18 @@ export default function InicioPage() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {NORMAS.map(n => (
-              <div key={n} className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-center" style={{ background: 'white', color: '#1a1a1a', border: '1px solid #e5e5e5' }}>{n}</div>
+              <a
+                key={n.label}
+                href={n.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-center transition-colors"
+                style={{ background: 'white', color: '#1a1a1a', border: '1px solid #e5e5e5', textDecoration: 'none' }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--hg-red)'; e.currentTarget.style.borderColor = 'var(--hg-red)' }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#1a1a1a'; e.currentTarget.style.borderColor = '#e5e5e5' }}
+              >
+                {n.label}
+              </a>
             ))}
           </div>
         </div>
@@ -418,6 +429,12 @@ const PASOS = [
 ]
 
 const NORMAS = [
-  'CGP — Ley 1564/2012', 'Art. 96 — Contestación', 'Art. 100 — Exc. previas', 'Art. 282 — Exc. de mérito',
-  'Art. 369 — Proc. verbal', 'C. Comercio — Seguros', 'Ley 1480/2011', 'CPACA Ley 1437/2011',
+  { label: 'CGP — Ley 1564/2012', url: 'http://www.secretariasenado.gov.co/senado/basedoc/ley_1564_2012.html' },
+  { label: 'Art. 96 — Contestación', url: 'https://leyes.co/codigo_general_del_proceso/96.htm' },
+  { label: 'Art. 100 — Exc. previas', url: 'https://leyes.co/codigo_general_del_proceso/100.htm' },
+  { label: 'Art. 282 — Exc. de mérito', url: 'https://leyes.co/codigo_general_del_proceso/282.htm' },
+  { label: 'Art. 369 — Proc. verbal', url: 'https://leyes.co/codigo_general_del_proceso/369.htm' },
+  { label: 'C. Comercio — Seguros', url: 'http://www.secretariasenado.gov.co/senado/basedoc/codigo_comercio_pr031.html#1036' },
+  { label: 'Ley 1480/2011', url: 'http://www.secretariasenado.gov.co/senado/basedoc/ley_1480_2011.html' },
+  { label: 'CPACA Ley 1437/2011', url: 'http://www.secretariasenado.gov.co/senado/basedoc/ley_1437_2011.html' },
 ]

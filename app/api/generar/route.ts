@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { SYSTEM_PROMPT } from '@/lib/prompts'
 
-export const maxDuration = 60
+// Render permite respuestas HTTP de hasta 100 minutos (a diferencia del
+// límite duro de 60s de Vercel Hobby), así que no hace falta dividir la
+// generación en varias llamadas: una sola llamada completa con el mejor
+// modelo es suficiente.
+export const maxDuration = 300
 
 export async function POST(req: NextRequest) {
   try {
@@ -52,9 +56,19 @@ export async function POST(req: NextRequest) {
     })
 
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-opus-4-8',
       max_tokens: 20000,
-      system: SYSTEM_PROMPT,
+      // Prompt caching: el SYSTEM_PROMPT es grande (~24k caracteres) y se repite
+      // idéntico en cada llamada. Cachearlo evita que Claude tenga que reprocesarlo
+      // de cero cada vez, lo que reduce notablemente la latencia y el costo en
+      // llamadas repetidas (cache válido ~5 min).
+      system: [
+        {
+          type: 'text',
+          text: SYSTEM_PROMPT,
+          cache_control: { type: 'ephemeral' },
+        },
+      ],
       messages: [
         {
           role: 'user',

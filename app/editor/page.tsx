@@ -299,13 +299,26 @@ export default function EditorPage() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={exportarDocumento}
+            onClick={() => {
+              if (!todasRevisadas) {
+                // No deja exportar: lleva al abogado a la primera sección pendiente.
+                if (pendientes[0]) scrollToSection(pendientes[0].id)
+                return
+              }
+              exportarDocumento()
+            }}
+            disabled={!todasRevisadas}
+            title={todasRevisadas ? 'Exportar documento limpio' : `Marca como revisadas las ${pendientes.length} sección${pendientes.length > 1 ? 'es' : ''} pendiente${pendientes.length > 1 ? 's' : ''} antes de exportar`}
             className="text-xs uppercase tracking-widest font-black px-5 py-2 text-white transition-all"
-            style={{ background: todasRevisadas ? '#16a34a' : 'var(--hg-red)' }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+            style={{
+              background: todasRevisadas ? '#16a34a' : '#3f3f3f',
+              opacity: todasRevisadas ? 1 : 0.6,
+              cursor: todasRevisadas ? 'pointer' : 'not-allowed',
+            }}
+            onMouseEnter={e => { if (todasRevisadas) e.currentTarget.style.opacity = '0.85' }}
+            onMouseLeave={e => { if (todasRevisadas) e.currentTarget.style.opacity = '1' }}
           >
-            {todasRevisadas ? '↓ Exportar documento limpio' : 'Exportar / Imprimir'}
+            {todasRevisadas ? '↓ Exportar documento limpio' : `🔒 Revisa ${pendientes.length} sección${pendientes.length > 1 ? 'es' : ''} para exportar`}
           </button>
 
           {/* Avatar usuario */}

@@ -119,7 +119,7 @@ export default function LandingPage() {
         <div className="mt-24 flex items-center justify-center gap-6">
           {[
             { val: '< 30 min', label: 'por contestación' },
-            { val: 'CGP 2012', label: 'normativa aplicada' },
+            { val: 'CGP', label: 'normativa aplicada' },
             { val: '100%', label: 'revisado por abogado' },
           ].map(s => (
             <div key={s.label} className="text-center px-8 border-r last:border-r-0" style={{ borderColor: '#1a1a1a' }}>
