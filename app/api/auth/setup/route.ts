@@ -12,6 +12,14 @@ import sql from '@/lib/db'
 
 const USUARIOS = [
   {
+    email: 'fjhurtado@hgdsas.com',
+    password: 'Langer2026!',
+    nombre: 'Francisco José Hurtado Langer',
+    cargo: 'Socio Director',
+    tarjeta_profesional: '86.320',
+    cedula: '16.829.57',
+  },
+  {
     email: 'f.gandini@hgdsas.com',
     password: 'Gandini2026!',
     nombre: 'Fernando Gandini',

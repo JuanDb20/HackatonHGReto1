@@ -250,6 +250,86 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* MODELO DE NEGOCIO SAAS */}
+          <div className="rounded-2xl p-7 mb-8" style={{ background: 'var(--hg-dark-card)', border: '1px solid var(--hg-border)' }}>
+            <h2 className="text-white font-black text-xl mb-2">Modelo de negocio: licenciamiento SaaS a otras firmas</h2>
+            <p className="text-xs mb-6 max-w-2xl" style={{ color: '#6b7280' }}>
+              Más allá del uso interno en Hurtado Gandini, LitigIA puede licenciarse como suscripción B2B a otras firmas legales colombianas. Estas cifras están calculadas sobre el costo real de la API de Claude y benchmarks del sector.
+            </p>
+
+            {/* Comparativa de precios */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-7">
+              <div className="rounded-xl p-5" style={{ background: 'rgba(139,28,28,0.12)', border: '1px solid var(--hg-red)' }}>
+                <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--hg-red)' }}>Plan LitigIA B2B</div>
+                <div className="text-3xl font-black text-white">$250<span className="text-sm font-semibold" style={{ color: '#9ca3af' }}>/mes</span></div>
+                <div className="text-xs mt-1" style={{ color: '#9ca3af' }}>o $2.500 USD/año por firma cliente (paga 10, recibe 12)</div>
+              </div>
+              <div className="rounded-xl p-5" style={{ background: '#0f0f0f', border: '1px solid var(--hg-border)' }}>
+                <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#6b7280' }}>Competencia — Legora</div>
+                <div className="text-3xl font-black" style={{ color: '#d1d5db' }}>$2.500<span className="text-sm font-semibold" style={{ color: '#6b7280' }}>/mes</span></div>
+                <div className="text-xs mt-1" style={{ color: '#6b7280' }}>$30.000 USD/año — 10x más costoso que LitigIA</div>
+              </div>
+              <div className="rounded-xl p-5" style={{ background: '#0f0f0f', border: '1px solid var(--hg-border)' }}>
+                <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#6b7280' }}>Alternativa — contratar abogado junior</div>
+                <div className="text-3xl font-black" style={{ color: '#d1d5db' }}>~$1.176<span className="text-sm font-semibold" style={{ color: '#6b7280' }}>/mes</span></div>
+                <div className="text-xs mt-1" style={{ color: '#6b7280' }}>≈ $4,07M COP/mes en nómina — 4,7x el costo de la licencia</div>
+              </div>
+            </div>
+
+            {/* Proyección financiera */}
+            <h3 className="text-white font-bold text-sm mb-3">Proyección financiera — escenario esperado (52 firmas cliente)</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-7">
+              {[
+                { label: 'Ingreso operativo', val: '$130.000', color: '#d1d5db' },
+                { label: 'Costo operativo (API Claude)', val: '$1.587', color: '#d1d5db' },
+                { label: 'Utilidad operativa (EBIT)', val: '$128.413', color: '#86efac' },
+                { label: 'Utilidad neta', val: '$43.443', color: 'var(--hg-red)' },
+              ].map(row => (
+                <div key={row.label} className="rounded-lg p-4" style={{ background: '#0f0f0f', border: '1px solid var(--hg-border)' }}>
+                  <div className="text-xs mb-1" style={{ color: '#6b7280' }}>{row.label}</div>
+                  <div className="text-lg font-black" style={{ color: row.color }}>{row.val}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-7">
+              <div className="rounded-xl p-5" style={{ background: 'rgba(139,28,28,0.1)', border: '1px solid rgba(139,28,28,0.3)' }}>
+                <div className="text-xs uppercase tracking-widest mb-1" style={{ color: '#fca5a5' }}>Margen neto proyectado</div>
+                <div className="text-3xl font-black text-white">33,42%</div>
+                <div className="text-xs mt-1" style={{ color: '#9ca3af' }}>Sobre $130.000 USD de ingreso operativo anual con 52 clientes.</div>
+              </div>
+              <div className="rounded-xl p-5" style={{ background: '#0f0f0f', border: '1px solid var(--hg-border)' }}>
+                <div className="text-xs uppercase tracking-widest mb-1" style={{ color: '#6b7280' }}>Punto de equilibrio</div>
+                <div className="text-3xl font-black text-white">25 firmas</div>
+                <div className="text-xs mt-1" style={{ color: '#9ca3af' }}>Clientes necesarios para cubrir costos fijos y de API (break-even: 24,9).</div>
+              </div>
+            </div>
+
+            {/* Benchmark de márgenes del sector legal */}
+            <h3 className="text-white font-bold text-sm mb-3">¿Por qué importa el margen? Benchmark del sector legal colombiano</h3>
+            <div className="space-y-3">
+              {[
+                { label: 'Hurtado Gandini S.A.S. (margen neto real)', pct: 0.07, color: '#6b7280' },
+                { label: 'Brigard & Urrutia Abogados S.A.S.', pct: 1.46, color: '#6b7280' },
+                { label: 'Olarte Moure & Asociados S.A.S.', pct: 17.94, color: '#9ca3af' },
+                { label: 'LitigIA — SaaS B2B (proyectado)', pct: 33.42, color: 'var(--hg-red)' },
+              ].map(b => (
+                <div key={b.label}>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span style={{ color: '#9ca3af' }}>{b.label}</span>
+                    <span className="font-bold" style={{ color: b.color }}>{b.pct}%</span>
+                  </div>
+                  <div className="h-2.5 rounded-full overflow-hidden" style={{ background: '#1a1a1a' }}>
+                    <div className="h-full rounded-full" style={{ width: `${Math.min(b.pct, 35) / 35 * 100}%`, background: b.color }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs mt-4" style={{ color: '#4b5563' }}>
+              Fuente: EMIS Markets (estados financieros individuales 2025, sector Servicios de apoyo a las empresas 17.2). Costo de API calculado sobre Claude Sonnet 4.6 (Anthropic, tarifas vigentes) y tasa de cambio de referencia 1 USD ≈ $3.459,53 COP.
+            </p>
+          </div>
+
           {/* SUPUESTOS */}
           <div className="rounded-2xl p-7" style={{ background: '#0f0f0f', border: '1px solid var(--hg-border)' }}>
             <h3 className="text-white font-bold text-base mb-4">📊 Supuestos del modelo financiero</h3>
